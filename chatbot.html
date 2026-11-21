@@ -1,0 +1,246 @@
+<!-- ===== CHATBOT PARFUMS : VERSION TOUT-EN-UN POUR WIX ===== -->
+<!-- À coller dans Wix : Paramètres > Code personnalisé > Body - fin, sur toutes les pages -->
+
+<style>
+/* ===== CHATBOT PARFUMS : DESIGN (CSS) ===== */
+
+#chat-bouton {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: #7b2d5b;
+  color: white;
+  font-size: 26px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+}
+
+#chat-fenetre {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 320px;
+  height: 440px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  font-family: Arial, sans-serif;
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.cache {
+  display: none !important;
+}
+
+#chat-entete {
+  background: #7b2d5b;
+  color: white;
+  padding: 12px;
+  font-weight: bold;
+}
+
+/* Zone des messages (défile si trop long) */
+#chat-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  background: #f8f4f7;
+}
+
+.message {
+  max-width: 85%;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  white-space: pre-line; /* permet les retours à la ligne */
+}
+
+.message.utilisateur {
+  background: #7b2d5b;
+  color: white;
+  margin-left: auto;
+}
+
+.message.bot {
+  background: #e9dfe6;
+  color: #222;
+  margin-right: auto;
+}
+
+/* Zone des boutons de choix */
+#chat-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid #ddd;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.option {
+  border: 1px solid #7b2d5b;
+  background: white;
+  color: #7b2d5b;
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: #7b2d5b;
+  color: white;
+}
+
+</style>
+
+<!-- ===== CHATBOT PARFUMS : STRUCTURE (HTML) ===== -->
+<!-- Bouton rond qui ouvre / ferme le chatbot -->
+<button id="chat-bouton" aria-label="Ouvrir le chatbot">💬</button>
+
+<!-- Fenêtre de discussion (cachée au départ) -->
+<div id="chat-fenetre" class="cache">
+  <div id="chat-entete">Conseiller parfums</div>
+
+  <!-- Zone où s'affichent les messages et les réponses -->
+  <div id="chat-messages"></div>
+
+  <!-- Zone des boutons de choix (le client clique, il n'écrit pas) -->
+  <div id="chat-options"></div>
+</div>
+
+<script>
+(function () {
+  function demarrer() {
+    // ===== CHATBOT PARFUMS : COMPORTEMENT (JavaScript) =====
+    // Le client ne tape rien : il clique sur des boutons et reçoit la réponse directement.
+
+    // 1. On récupère les éléments de la page
+    const bouton = document.getElementById("chat-bouton");
+    const fenetre = document.getElementById("chat-fenetre");
+    const zoneMessages = document.getElementById("chat-messages");
+    const zoneOptions = document.getElementById("chat-options");
+
+    // 2. Le "menu" du chatbot.
+    //    Chaque étape a : un texte (réponse du bot) et des options (boutons).
+    //    Chaque option a : un label (texte du bouton) et "vers" (l'étape suivante).
+    const etapes = {
+      accueil: {
+        texte: "Bienvenue chez Parfumerie de Luxe ! 🌸 Que souhaitez-vous savoir ?",
+        options: [
+          { label: "🧴 Nos parfums", vers: "parfums" },
+          { label: "💰 Prix", vers: "prix" },
+          { label: "🚚 Livraison", vers: "livraison" },
+          { label: "↩️ Retours", vers: "retours" },
+          { label: "🕘 Horaires", vers: "horaires" },
+          { label: "📍 Localisation", vers: "localisation" },
+          { label: "📧 Contact", vers: "contact" }
+        ]
+      },
+
+      parfums: {
+        texte: "Pour découvrir tous nos parfums et nos catégories, consultez la page Boutique du site.",
+        options: [{ label: "Voir les prix", vers: "prix" }]
+      },
+
+      prix: {
+        texte: "Nos produits ont des prix variés. Consultez la page Boutique pour voir tous les tarifs.",
+        options: [{ label: "Livraison", vers: "livraison" }]
+      },
+
+      livraison: {
+        texte: "Le délai de livraison est à partir de 2 jours.",
+        options: [{ label: "Retours", vers: "retours" }]
+      },
+
+      retours: {
+        texte: "Les retours sont acceptés sous 9 jours maximum. La consommation du produit doit être inférieure à 5 ml.",
+        options: [{ label: "Contact", vers: "contact" }]
+      },
+
+      horaires: {
+        texte: "Nous sommes ouverts du lundi au vendredi, de 9h00 à 19h00.",
+        options: [{ label: "Localisation", vers: "localisation" }]
+      },
+
+      localisation: {
+        texte: "Notre adresse :\n123 Avenue de la Paix, 75008 Paris, France",
+        options: [{ label: "Horaires", vers: "horaires" }]
+      },
+
+      contact: {
+        texte: "Écrivez-nous par email : hello@parfumeriedeluxe.com",
+        options: []
+      }
+    };
+
+    // 3. Ouvrir / fermer la fenêtre
+    bouton.addEventListener("click", function () {
+      fenetre.classList.toggle("cache");
+
+      // Premier affichage : on montre le menu d'accueil
+      if (!fenetre.classList.contains("cache") && zoneMessages.children.length === 0) {
+        afficherEtape("accueil");
+      }
+    });
+
+    // 4. Ajouter un message dans la zone de discussion
+    function ajouterMessage(texte, auteur) {
+      const message = document.createElement("div");
+      message.className = "message " + auteur; // "message bot" ou "message utilisateur"
+      message.textContent = texte;
+      zoneMessages.appendChild(message);
+      zoneMessages.scrollTop = zoneMessages.scrollHeight;
+    }
+
+    // 5. Afficher la réponse du bot + les boutons de l'étape
+    function afficherEtape(nom) {
+      const etape = etapes[nom];
+      ajouterMessage(etape.texte, "bot");
+
+      zoneOptions.innerHTML = ""; // on efface les anciens boutons
+
+      for (const opt of etape.options) {
+        creerBouton(opt.label, opt.vers);
+      }
+
+      // Sur toutes les étapes sauf l'accueil, on propose de revenir au menu
+      if (nom !== "accueil") {
+        creerBouton("🏠 Menu principal", "accueil");
+      }
+    }
+
+    // 6. Créer un bouton de choix
+    function creerBouton(label, vers) {
+      const b = document.createElement("button");
+      b.className = "option";
+      b.textContent = label;
+      b.addEventListener("click", function () {
+        ajouterMessage(label, "utilisateur");   // le choix du client apparaît comme son message
+        zoneOptions.innerHTML = "";             // on retire les boutons le temps de répondre
+        setTimeout(function () {
+          afficherEtape(vers);
+        }, 400);
+      });
+      zoneOptions.appendChild(b);
+    }
+  }
+
+  // On attend que la page soit prête avant de lancer le chatbot
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", demarrer);
+  } else {
+    demarrer();
+  }
+})();
+</script>
